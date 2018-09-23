@@ -2,15 +2,18 @@ import React, {Component} from 'react';
 import logo from './logo.svg';
 import './App.css';
 import firebase from 'firebase/app';
+import 'firebase/auth';
 import 'firebase/firestore';
+import {FirebaseAuth} from 'react-firebaseui';
+
+firebase.initializeApp({
+  apiKey: 'AIzaSyAZv3xYRqBQTuPN02gy6zz25C0LUgpZ6zU',
+  authDomain: 'lunchtime-react-95b31.firebaseapp.com',
+  projectId: 'lunchtime-react-95b31',
+});
 
 class Store {
   constructor() {
-    firebase.initializeApp({
-      authDomain: 'lunchtime-react-95b31.firebaseapp.com',
-      projectId: 'lunchtime-react-95b31',
-    });
-
     this.db = firebase.firestore();
 
     this.db.settings({
@@ -64,13 +67,27 @@ class App extends Component {
 
     this.state = {
       loading: true,
+      user: firebase.auth().currentUser,
+    };
+
+    this.firebaseUiConfig = {
+      signInFlow: 'popup',
+      signInOptions: [
+        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+        firebase.auth.PhoneAuthProvider.PROVIDER_ID,
+      ],
+      callbacks: {
+        signInSuccessWithAuthResult: result => {
+          this.setState({user: result.user});
+        },
+      },
     };
 
     this.onDestinationCreate = this.onDestinationCreate.bind(this);
     this.onDestinationDelete = this.onDestinationDelete.bind(this);
   }
 
-  async componentDidMount() {
+  async listenForDestinations() {
     const observer = {
       onAdded: dest => {
         const destinations = [...(this.state.destinations || []), dest];
@@ -89,7 +106,13 @@ class App extends Component {
         this.setState({destinations, loading: false});
       },
     };
-    this.unsubscribe = await this.store.listenForDestinations(observer);
+    this.destinationsSubscription = await this.store.listenForDestinations(
+      observer,
+    );
+  }
+
+  async componentDidMount() {
+    await this.listenForDestinations();
   }
 
   onDestinationCreate(dest) {
@@ -101,6 +124,15 @@ class App extends Component {
   }
 
   render() {
+    if (!this.state.user) {
+      return (
+        <FirebaseAuth
+          uiConfig={this.firebaseUiConfig}
+          firebaseAuth={firebase.auth()}
+        />
+      );
+    }
+
     const list = this.state.loading ? (
       <div>Loading...</div>
     ) : (
