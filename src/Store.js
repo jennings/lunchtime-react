@@ -1,6 +1,12 @@
 import firebase from 'firebase/app';
 import 'firebase/firestore';
 
+const noopObserver = {
+  added() {},
+  modified() {},
+  removed() {},
+};
+
 class Store {
   constructor() {
     this.db = firebase.firestore();
@@ -11,6 +17,7 @@ class Store {
   }
 
   listenForDestinations(observer) {
+    observer = {...noopObserver, ...observer};
     const unsubscribe = this.db
       .collection('destinations')
       .onSnapshot(querySnapshot => {
@@ -18,15 +25,15 @@ class Store {
         for (const change of changes) {
           switch (change.type) {
             case 'added':
-              observer.onAdded &&
-                observer.onAdded({id: change.doc.id, ...change.doc.data()});
+              observer.added &&
+                observer.added({id: change.doc.id, ...change.doc.data()});
               break;
             case 'modified':
-              observer.onModified &&
-                observer.onModified({id: change.doc.id, ...change.doc.data()});
+              observer.modified &&
+                observer.modified({id: change.doc.id, ...change.doc.data()});
               break;
             case 'removed':
-              observer.onRemoved && observer.onRemoved({id: change.doc.id});
+              observer.removed && observer.removed({id: change.doc.id});
               break;
             default:
               console.log('unrecognized change type', change);

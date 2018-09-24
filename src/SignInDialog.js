@@ -14,7 +14,7 @@ class SignInDialog extends Component {
       ],
       callbacks: {
         signInSuccessWithAuthResult: result => {
-          this.props.onSignIn({user: result.user});
+          this.props.authService.signIn(result.user);
         },
       },
     };

@@ -8,7 +8,8 @@
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
     "react-firebaseui": "^3.0.7",
-    "react-scripts": "1.1.5"
+    "react-scripts": "1.1.5",
+    "rxjs": "^6.3.2"
   },
   "scripts": {
     "predeploy": "yarn run build",

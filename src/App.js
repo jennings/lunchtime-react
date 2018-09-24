@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Store from './Store';
+import AuthService from './AuthService';
 import DestinationList from './DestinationList';
 import SignInDialog from './SignInDialog';
 import firebase from 'firebase/app';
@@ -16,29 +17,35 @@ class App extends Component {
   constructor() {
     super();
     this.store = new Store();
+    this.authService = new AuthService();
 
     this.state = {
       loading: true,
-      user: firebase.auth().currentUser,
     };
+
+    this.authService.currentUser$.subscribe(user => {
+      this.setState({user});
+    });
 
     this.onDestinationCreate = this.onDestinationCreate.bind(this);
     this.onDestinationDelete = this.onDestinationDelete.bind(this);
+    this.handleSignIn = this.handleSignIn.bind(this);
+    this.handleSignOut = this.handleSignOut.bind(this);
   }
 
   async listenForDestinations() {
     const observer = {
-      onAdded: dest => {
+      added: dest => {
         const destinations = [...(this.state.destinations || []), dest];
         this.setState({destinations, loading: false});
       },
-      onModified: dest => {
+      modified: dest => {
         const destinations = this.state.destinations(d => {
           return d.id === dest.id ? dest : d;
         });
         this.setState({destinations, loading: false});
       },
-      onRemoved: dest => {
+      removed: dest => {
         const destinations = this.state.destinations.filter(
           d => d.id !== dest.id,
         );
@@ -63,24 +70,41 @@ class App extends Component {
   }
 
   handleSignIn({user}) {
+    this.authService.signIn(user);
     this.setState({user});
+  }
+
+  handleSignOut() {
+    this.authService.signOut();
+    this.setState({user: null});
   }
 
   render() {
     let body;
     if (!this.state.user) {
-      body = <SignInDialog onSignIn={e => this.handleSignIn(e)} />;
-    } else if (this.state.loading) {
+      body = (
+        <SignInDialog
+          authService={this.authService}
+          onSignIn={this.handleSignIn}
+        />
+      );
+    } else if (this.state.destinations == null) {
       body = (
         <div>
-          <p>Signed in as: {this.state.user.displayName}</p>
+          <p>
+            Signed in as: {this.state.user.displayName}
+            <button onClick={this.handleSignOut}>Sign out</button>
+          </p>
           <p>Loading data...</p>
         </div>
       );
     } else {
       body = (
         <div>
-          <p>Signed in as: {this.state.user.displayName}</p>
+          <p>
+            Signed in as: {this.state.user.displayName}
+            <button onClick={this.handleSignOut}>Sign out</button>
+          </p>
           <DestinationList
             destinations={this.state.destinations}
             onCreate={this.onDestinationCreate}
