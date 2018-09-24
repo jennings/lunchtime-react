@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import logo from './logo.svg';
 import './App.css';
 import Store from './Store';
 import AuthService from './AuthService';
@@ -18,14 +17,7 @@ class App extends Component {
     super();
     this.store = new Store();
     this.authService = new AuthService();
-
-    this.state = {
-      loading: true,
-    };
-
-    this.authService.currentUser$.subscribe(user => {
-      this.setState({user});
-    });
+    this.state = {};
 
     this.onDestinationCreate = this.onDestinationCreate.bind(this);
     this.onDestinationDelete = this.onDestinationDelete.bind(this);
@@ -33,32 +25,18 @@ class App extends Component {
     this.handleSignOut = this.handleSignOut.bind(this);
   }
 
-  async listenForDestinations() {
-    const observer = {
-      added: dest => {
-        const destinations = [...(this.state.destinations || []), dest];
-        this.setState({destinations, loading: false});
-      },
-      modified: dest => {
-        const destinations = this.state.destinations(d => {
-          return d.id === dest.id ? dest : d;
-        });
-        this.setState({destinations, loading: false});
-      },
-      removed: dest => {
-        const destinations = this.state.destinations.filter(
-          d => d.id !== dest.id,
-        );
-        this.setState({destinations, loading: false});
-      },
-    };
-    this.destinationsSubscription = await this.store.listenForDestinations(
-      observer,
+  componentDidMount() {
+    this.currentUserSubscription = this.authService.currentUser$.subscribe(
+      user => this.setState({user}),
+    );
+    this.destinationsSubscription = this.store.destinations$.subscribe(
+      destinations => this.setState({destinations}),
     );
   }
 
-  async componentDidMount() {
-    await this.listenForDestinations();
+  componentWillUnmount() {
+    this.currentUserSubscription.unsubscribe();
+    this.destinationsSubscription.unsubscribe();
   }
 
   onDestinationCreate(dest) {
@@ -117,8 +95,7 @@ class App extends Component {
     return (
       <div className="App">
         <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
+          <h1 className="App-title">Lunchtime</h1>
         </header>
 
         <div className="App-body">{body}</div>

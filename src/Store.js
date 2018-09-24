@@ -1,11 +1,7 @@
 import firebase from 'firebase/app';
 import 'firebase/firestore';
-
-const noopObserver = {
-  added() {},
-  modified() {},
-  removed() {},
-};
+import {Observable} from 'rxjs';
+import {share} from 'rxjs/operators';
 
 class Store {
   constructor() {
@@ -14,33 +10,26 @@ class Store {
     this.db.settings({
       timestampsInSnapshots: true,
     });
+
+    this._destinations$ = Observable.create(observer => {
+      const unsubscribe = this.db
+        .collection('destinations')
+        .onSnapshot(querySnapshot => {
+          const destinations = [];
+          querySnapshot.forEach(doc =>
+            destinations.push({
+              id: doc.id,
+              ...doc.data(),
+            }),
+          );
+          observer.next(destinations);
+        });
+      return unsubscribe;
+    }).pipe(share());
   }
 
-  listenForDestinations(observer) {
-    observer = {...noopObserver, ...observer};
-    const unsubscribe = this.db
-      .collection('destinations')
-      .onSnapshot(querySnapshot => {
-        const changes = querySnapshot.docChanges();
-        for (const change of changes) {
-          switch (change.type) {
-            case 'added':
-              observer.added &&
-                observer.added({id: change.doc.id, ...change.doc.data()});
-              break;
-            case 'modified':
-              observer.modified &&
-                observer.modified({id: change.doc.id, ...change.doc.data()});
-              break;
-            case 'removed':
-              observer.removed && observer.removed({id: change.doc.id});
-              break;
-            default:
-              console.log('unrecognized change type', change);
-          }
-        }
-      });
-    return {unsubscribe};
+  get destinations$() {
+    return this._destinations$;
   }
 
   async createDestination(dest) {
