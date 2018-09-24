@@ -67,19 +67,29 @@ class App extends Component {
   }
 
   render() {
+    let body;
     if (!this.state.user) {
-      return <SignInDialog onSignIn={e => this.handleSignIn(e)} />;
+      body = <SignInDialog onSignIn={e => this.handleSignIn(e)} />;
+    } else if (this.state.loading) {
+      body = (
+        <div>
+          <p>Signed in as: {this.state.user.displayName}</p>
+          <p>Loading data...</p>
+        </div>
+      );
+    } else {
+      body = (
+        <div>
+          <p>Signed in as: {this.state.user.displayName}</p>
+          <DestinationList
+            destinations={this.state.destinations}
+            onCreate={this.onDestinationCreate}
+            onDelete={this.onDestinationDelete}
+          />
+        </div>
+      );
     }
 
-    const list = this.state.loading ? (
-      <div>Loading...</div>
-    ) : (
-      <DestinationList
-        destinations={this.state.destinations}
-        onCreate={this.onDestinationCreate}
-        onDelete={this.onDestinationDelete}
-      />
-    );
     return (
       <div className="App">
         <header className="App-header">
@@ -87,11 +97,7 @@ class App extends Component {
           <h1 className="App-title">Welcome to React</h1>
         </header>
 
-        <div className="App-body">{list}</div>
-
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
+        <div className="App-body">{body}</div>
       </div>
     );
   }
