@@ -1,23 +1,26 @@
-import {BehaviorSubject} from 'rxjs';
+import firebase from 'firebase/app';
+import 'firebase/auth';
+import {Observable} from 'rxjs';
+import {share} from 'rxjs/operators';
 
 class AuthService {
   constructor() {
-    this._currentUser$ = new BehaviorSubject();
+    this.firebaseAuth = firebase.auth();
+    this._currentUser$ = Observable.create(observer => {
+      this.firebaseAuth.onAuthStateChanged(user => {
+        observer.next(user);
+      });
+    }).pipe(share());
   }
 
   get currentUser$() {
-    return this._currentUser$.asObservable();
+    return this._currentUser$;
   }
 
-  signIn(user) {
-    const val = JSON.stringify(user);
-    sessionStorage.setItem('currentUser', val);
-    this._currentUser$.next(user);
-  }
+  signIn() {}
 
-  signOut() {
-    sessionStorage.removeItem('currentUser');
-    this._currentUser$.next();
+  async signOut() {
+    await this.firebaseAuth.signOut();
   }
 }
 

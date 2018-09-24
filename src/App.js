@@ -21,7 +21,6 @@ class App extends Component {
 
     this.onDestinationCreate = this.onDestinationCreate.bind(this);
     this.onDestinationDelete = this.onDestinationDelete.bind(this);
-    this.handleSignIn = this.handleSignIn.bind(this);
     this.handleSignOut = this.handleSignOut.bind(this);
   }
 
@@ -47,25 +46,14 @@ class App extends Component {
     this.store.deleteDestination(dest.id);
   }
 
-  handleSignIn({user}) {
-    this.authService.signIn(user);
-    this.setState({user});
-  }
-
   handleSignOut() {
     this.authService.signOut();
-    this.setState({user: null});
   }
 
   render() {
     let body;
     if (!this.state.user) {
-      body = (
-        <SignInDialog
-          authService={this.authService}
-          onSignIn={this.handleSignIn}
-        />
-      );
+      body = <SignInDialog authService={this.authService} />;
     } else if (this.state.destinations == null) {
       body = (
         <div>
