@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import {localeCompareWithSelector} from './util/compare';
 
 class DestinationList extends Component {
   constructor(props) {
@@ -16,12 +17,17 @@ class DestinationList extends Component {
   }
 
   render() {
-    const destinationItems = this.props.destinations.map(d => (
-      <li key={d.name}>
-        <button onClick={() => this.handleDeleteDestination(d)}>delete</button>
-        {d.name}
-      </li>
-    ));
+    const destinationItems = this.props.destinations
+      .slice()
+      .sort(localeCompareWithSelector(d => d.name))
+      .map(d => (
+        <li key={d.name}>
+          <button onClick={() => this.handleDeleteDestination(d)}>
+            delete
+          </button>
+          {d.name}
+        </li>
+      ));
 
     return (
       <div>

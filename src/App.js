@@ -5,6 +5,8 @@ import AuthService from './AuthService';
 import DestinationList from './DestinationList';
 import SignInDialog from './SignInDialog';
 import firebase from 'firebase/app';
+import {from as observableFrom} from 'rxjs';
+import {switchMap} from 'rxjs/operators';
 
 firebase.initializeApp({
   apiKey: 'AIzaSyAZv3xYRqBQTuPN02gy6zz25C0LUgpZ6zU',
@@ -28,9 +30,9 @@ class App extends Component {
     this.currentUserSubscription = this.authService.currentUser$.subscribe(
       user => this.setState({user}),
     );
-    this.destinationsSubscription = this.store.destinations$.subscribe(
-      destinations => this.setState({destinations}),
-    );
+    this.authService.currentUser$
+      .pipe(switchMap(u => (u ? this.store.destinations$ : observableFrom([]))))
+      .subscribe(destinations => this.setState({destinations}));
   }
 
   componentWillUnmount() {
