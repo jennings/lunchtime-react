@@ -88,7 +88,9 @@ class App extends Component {
           <h1 className="App-title">Lunchtime</h1>
         </header>
 
-        <div className="App-body">{body}</div>
+        <div className="App-body-container">
+          <div className="App-body">{body}</div>
+        </div>
       </div>
     );
   }
