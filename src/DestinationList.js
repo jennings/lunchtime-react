@@ -25,7 +25,7 @@ class DestinationList extends Component {
           <button onClick={() => this.handleDeleteDestination(d)}>
             delete
           </button>
-          {d.name}
+          {' ' + d.name}
         </li>
       ));
 

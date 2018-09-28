@@ -3,6 +3,7 @@ import './App.css';
 import Store from './Store';
 import AuthService from './AuthService';
 import DestinationList from './DestinationList';
+import Picker from './Picker';
 import SignInDialog from './SignInDialog';
 import firebase from 'firebase/app';
 import {from as observableFrom} from 'rxjs';
@@ -73,6 +74,11 @@ class App extends Component {
             Signed in as: {this.state.user.displayName}
             <button onClick={this.handleSignOut}>Sign out</button>
           </p>
+
+          <h1>Pick a place</h1>
+          <Picker destinations={this.state.destinations} />
+
+          <h1>Edit places</h1>
           <DestinationList
             destinations={this.state.destinations}
             onCreate={this.onDestinationCreate}
