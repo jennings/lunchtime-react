@@ -24,7 +24,7 @@ class SignInDialog extends Component {
     return (
       <FirebaseAuth
         uiConfig={this.firebaseUiConfig}
-        firebaseAuth={firebase.auth()}
+        firebaseAuth={this.props.authService.firebaseAuth}
       />
     );
   }
