@@ -10,9 +10,9 @@ import {from as observableFrom} from 'rxjs';
 import {switchMap} from 'rxjs/operators';
 
 firebase.initializeApp({
-  apiKey: 'AIzaSyAZv3xYRqBQTuPN02gy6zz25C0LUgpZ6zU',
-  authDomain: 'lunchtime-react-95b31.firebaseapp.com',
-  projectId: 'lunchtime-react-95b31',
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
 });
 
 class App extends Component {
