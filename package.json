@@ -5,10 +5,10 @@
   "homepage": "https://lunchtime-react.jennings.io",
   "dependencies": {
     "firebase": "^5.7.1",
-    "react": "^16.5.2",
-    "react-dom": "^16.5.2",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
     "react-firebaseui": "^3.0.7",
-    "react-scripts": "1.1.5",
+    "react-scripts": "^3.0.1",
     "rxjs": "^6.3.2"
   },
   "scripts": {
