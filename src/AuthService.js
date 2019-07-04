@@ -17,7 +17,7 @@ class AuthService {
     return this._currentUser$;
   }
 
-  signIn() {}
+  signIn(user) {}
 
   async signOut() {
     await this.firebaseAuth.signOut();
