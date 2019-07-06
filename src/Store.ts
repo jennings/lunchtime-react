@@ -14,10 +14,6 @@ class Store {
   constructor() {
     this._db = firebase.firestore();
 
-    this._db.settings({
-      timestampsInSnapshots: true
-    });
-
     this.destinations$ = Observable.create(
       (observer: Observer<Destination[]>) => {
         const unsubscribe = this._db
