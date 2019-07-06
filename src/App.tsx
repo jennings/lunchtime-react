@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useEffect, useState } from "react";
 import "./App.css";
 import Store from "./Store";
 import AuthService from "./AuthService";
@@ -32,83 +32,67 @@ export default function App() {
   );
 }
 
-class Home extends Component<unknown, any> {
-  private store: Store;
-  private authService: AuthService;
-  private currentUserSubscription: Subscription | null = null;
-  private destinationsSubscription: Subscription | null = null;
+const store = new Store();
+const authService = new AuthService();
 
-  constructor(props: unknown) {
-    super(props);
-    this.store = new Store();
-    this.authService = new AuthService();
-    this.state = {};
+function Home() {
+  const [user, setUser] = useState();
+  const [destinations, setDestinations] = useState(null);
 
-    this.onDestinationCreate = this.onDestinationCreate.bind(this);
-    this.onDestinationDelete = this.onDestinationDelete.bind(this);
-    this.handleSignOut = this.handleSignOut.bind(this);
-  }
+  useEffect(() => {
+    const sub = authService.currentUser$.subscribe(setUser);
+    return () => sub.unsubscribe();
+  }, []);
 
-  componentDidMount() {
-    this.currentUserSubscription = this.authService.currentUser$.subscribe(
-      (user: any) => this.setState({ user })
+  useEffect(() => {
+    const sub = authService.currentUser$
+      .pipe(switchMap(u => (u ? store.destinations$ : observableFrom([]))))
+      .subscribe(setDestinations);
+    return () => sub.unsubscribe();
+  }, []);
+
+  const onDestinationCreate = (dest: Destination) => {
+    store.createDestination(dest);
+  };
+
+  const onDestinationDelete = (dest: Destination) => {
+    store.deleteDestination(dest.id);
+  };
+
+  const handleSignOut = () => {
+    authService.signOut();
+  };
+
+  if (!user) {
+    return <SignInDialog authService={authService} />;
+  } else if (destinations == null) {
+    return (
+      <div>
+        <p>
+          Signed in as: {user.displayName}
+          <button onClick={handleSignOut}>Sign out</button>
+        </p>
+        <p>Loading data...</p>
+      </div>
     );
-    this.authService.currentUser$
-      .pipe(switchMap(u => (u ? this.store.destinations$ : observableFrom([]))))
-      .subscribe((destinations: any) => this.setState({ destinations }));
-  }
+  } else {
+    return (
+      <div>
+        <p>
+          Signed in as: {user.displayName}
+          <button onClick={handleSignOut}>Sign out</button>
+        </p>
 
-  componentWillUnmount() {
-    const sub = this.currentUserSubscription;
-    if (sub) sub.unsubscribe();
-    const sub2 = this.destinationsSubscription;
-    if (sub2) sub2.unsubscribe();
-  }
+        <h1>Pick a place</h1>
+        <Picker destinations={destinations} />
 
-  onDestinationCreate(dest: Destination) {
-    this.store.createDestination(dest);
-  }
-
-  onDestinationDelete(dest: Destination) {
-    this.store.deleteDestination(dest.id);
-  }
-
-  handleSignOut() {
-    this.authService.signOut();
-  }
-
-  render() {
-    if (!this.state.user) {
-      return <SignInDialog authService={this.authService} />;
-    } else if (this.state.destinations == null) {
-      return (
-        <div>
-          <p>
-            Signed in as: {this.state.user.displayName}
-            <button onClick={this.handleSignOut}>Sign out</button>
-          </p>
-          <p>Loading data...</p>
-        </div>
-      );
-    } else {
-      return (
-        <div>
-          <p>
-            Signed in as: {this.state.user.displayName}
-            <button onClick={this.handleSignOut}>Sign out</button>
-          </p>
-
-          <h1>Pick a place</h1>
-          <Picker destinations={this.state.destinations} />
-
-          <h1>Edit places</h1>
-          <DestinationList
-            destinations={this.state.destinations}
-            onCreate={this.onDestinationCreate}
-            onDelete={this.onDestinationDelete}
-          />
-        </div>
-      );
-    }
+        <h1>Edit places</h1>
+        <DestinationList
+          destinations={destinations}
+          onCreate={onDestinationCreate}
+          onDelete={onDestinationDelete}
+        />
+      </div>
+    );
   }
 }
