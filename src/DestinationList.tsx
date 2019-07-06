@@ -1,12 +1,12 @@
-import React from "react";
+import React, { ChangeEvent, KeyboardEvent } from "react";
 import { useState } from "react";
 import { localeCompareWithSelector } from "./util/compare";
 
-export default function DestinationList({ destinations, onCreate, onDelete }) {
+export default function DestinationList({ destinations, onCreate, onDelete }: any) {
   const destinationItems = destinations
     .slice()
-    .sort(localeCompareWithSelector(d => d.name))
-    .map(d => (
+    .sort(localeCompareWithSelector((d: any) => d.name))
+    .map((d: any) => (
       <li key={d.name}>
         <button onClick={() => onDelete(d)}>delete</button>
         {" " + d.name}
@@ -23,24 +23,19 @@ export default function DestinationList({ destinations, onCreate, onDelete }) {
   );
 }
 
-function DestinationAdder({ value, onAdd }) {
+function DestinationAdder({ value, onAdd }: any) {
   const [text, setText] = useState(value);
-
-  let inputElement = null;
 
   const handleSubmit = () => {
     onAdd({ name: text });
     setText("");
-    if (inputElement) {
-      inputElement.focus();
-    }
   };
 
-  const handleValueChanged = event => {
+  const handleValueChanged = (event: ChangeEvent<HTMLInputElement>) => {
     setText(event.target.value);
   };
 
-  const handleInputKeyPress = event => {
+  const handleInputKeyPress = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       handleSubmit();
     }
@@ -50,7 +45,6 @@ function DestinationAdder({ value, onAdd }) {
     <div>
       <label>Name</label>
       <input
-        ref={i => (inputElement = i)}
         value={text}
         onChange={handleValueChanged}
         onKeyPress={handleInputKeyPress}
