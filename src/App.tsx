@@ -65,24 +65,14 @@ function Home() {
 
   if (!user) {
     return <SignInDialog authService={authService} />;
-  } else if (destinations == null) {
-    return (
-      <div>
-        <p>
-          Signed in as: {user.displayName}
-          <button onClick={handleSignOut}>Sign out</button>
-        </p>
-        <p>Loading data...</p>
-      </div>
-    );
-  } else {
-    return (
-      <div>
-        <p>
-          Signed in as: {user.displayName}
-          <button onClick={handleSignOut}>Sign out</button>
-        </p>
+  }
 
+  let body;
+  if (destinations == null) {
+    body = <p>Loading data...</p>;
+  } else {
+    body = (
+      <>
         <h1>Pick a place</h1>
         <Picker destinations={destinations} />
 
@@ -92,7 +82,17 @@ function Home() {
           onCreate={onDestinationCreate}
           onDelete={onDestinationDelete}
         />
-      </div>
+      </>
     );
   }
+
+  return (
+    <div>
+      <p>
+        Signed in as: {user.displayName}
+        <button onClick={handleSignOut}>Sign out</button>
+      </p>
+      {body}
+    </div>
+  );
 }
