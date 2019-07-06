@@ -3,7 +3,7 @@ import "firebase/firestore";
 import { Observable, Observer } from "rxjs";
 import { share } from "rxjs/operators";
 
-interface Destination {
+export interface Destination {
   id: string;
 }
 

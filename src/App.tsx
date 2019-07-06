@@ -1,23 +1,45 @@
-import React, {Component} from 'react';
-import './App.css';
-import Store from './Store';
-import AuthService from './AuthService';
-import DestinationList from './DestinationList';
-import Picker from './Picker';
-import SignInDialog from './SignInDialog';
-import firebase from 'firebase/app';
-import {from as observableFrom} from 'rxjs';
-import {switchMap} from 'rxjs/operators';
+import React, { Component } from "react";
+import "./App.css";
+import Store from "./Store";
+import AuthService from "./AuthService";
+import DestinationList from "./DestinationList";
+import Picker from "./Picker";
+import SignInDialog from "./SignInDialog";
+import firebase from "firebase/app";
+import { from as observableFrom, Subscription } from "rxjs";
+import { switchMap } from "rxjs/operators";
+import { Destination } from "./Store";
 
 firebase.initializeApp({
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID
 });
 
-class App extends Component {
-  constructor() {
-    super();
+export default function App() {
+  return (
+    <div className="App">
+      <header className="App-header">
+        <h1 className="App-title">Lunchtime</h1>
+      </header>
+
+      <div className="App-body-container">
+        <div className="App-body">
+          <Home />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+class Home extends Component<unknown, any> {
+  private store: Store;
+  private authService: AuthService;
+  private currentUserSubscription: Subscription | null = null;
+  private destinationsSubscription: Subscription | null = null;
+
+  constructor(props: unknown) {
+    super(props);
     this.store = new Store();
     this.authService = new AuthService();
     this.state = {};
@@ -29,23 +51,25 @@ class App extends Component {
 
   componentDidMount() {
     this.currentUserSubscription = this.authService.currentUser$.subscribe(
-      user => this.setState({user}),
+      (user: any) => this.setState({ user })
     );
     this.authService.currentUser$
       .pipe(switchMap(u => (u ? this.store.destinations$ : observableFrom([]))))
-      .subscribe(destinations => this.setState({destinations}));
+      .subscribe((destinations: any) => this.setState({ destinations }));
   }
 
   componentWillUnmount() {
-    this.currentUserSubscription.unsubscribe();
-    this.destinationsSubscription.unsubscribe();
+    const sub = this.currentUserSubscription;
+    if (sub) sub.unsubscribe();
+    const sub2 = this.destinationsSubscription;
+    if (sub2) sub2.unsubscribe();
   }
 
-  onDestinationCreate(dest) {
+  onDestinationCreate(dest: Destination) {
     this.store.createDestination(dest);
   }
 
-  onDestinationDelete(dest) {
+  onDestinationDelete(dest: Destination) {
     this.store.deleteDestination(dest.id);
   }
 
@@ -54,11 +78,10 @@ class App extends Component {
   }
 
   render() {
-    let body;
     if (!this.state.user) {
-      body = <SignInDialog authService={this.authService} />;
+      return <SignInDialog authService={this.authService} />;
     } else if (this.state.destinations == null) {
-      body = (
+      return (
         <div>
           <p>
             Signed in as: {this.state.user.displayName}
@@ -68,7 +91,7 @@ class App extends Component {
         </div>
       );
     } else {
-      body = (
+      return (
         <div>
           <p>
             Signed in as: {this.state.user.displayName}
@@ -87,19 +110,5 @@ class App extends Component {
         </div>
       );
     }
-
-    return (
-      <div className="App">
-        <header className="App-header">
-          <h1 className="App-title">Lunchtime</h1>
-        </header>
-
-        <div className="App-body-container">
-          <div className="App-body">{body}</div>
-        </div>
-      </div>
-    );
   }
 }
-
-export default App;
