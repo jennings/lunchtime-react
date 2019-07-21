@@ -1,11 +1,18 @@
 import React, { ChangeEvent, KeyboardEvent } from "react";
 import { useState } from "react";
 import { localeCompareWithSelector } from "./util/compare";
+import { Destination } from "./Store";
 
-export default function DestinationList({ destinations, onCreate, onDelete }: any) {
+interface DestinationListProps {
+  destinations: Destination[];
+  onCreate: Function;
+  onDelete: Function;
+}
+
+export default function DestinationList({ destinations, onCreate, onDelete }: DestinationListProps) {
   const destinationItems = destinations
     .slice()
-    .sort(localeCompareWithSelector((d: any) => d.name))
+    .sort(localeCompareWithSelector(d => d.name))
     .map((d: any) => (
       <li key={d.name}>
         <button onClick={() => onDelete(d)}>delete</button>

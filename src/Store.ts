@@ -5,6 +5,7 @@ import { share } from "rxjs/operators";
 
 export interface Destination {
   id: string;
+  name: string;
 }
 
 class Store {
@@ -24,7 +25,7 @@ class Store {
               destinations.push({
                 id: doc.id,
                 ...doc.data()
-              })
+              } as Destination)
             );
             observer.next(destinations);
           });
