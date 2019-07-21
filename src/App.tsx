@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, Props } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { BrowserRouter, Route, Switch, Redirect, RouteProps } from "react-router-dom";
 import "./App.css";
 import Store from "./Store";
