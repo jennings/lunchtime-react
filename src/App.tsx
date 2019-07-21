@@ -1,4 +1,5 @@
-import React, { Component, useEffect, useState } from "react";
+import React, { useEffect, useState, useContext, Props } from "react";
+import { BrowserRouter, Route, Switch, Redirect, RouteProps } from "react-router-dom";
 import "./App.css";
 import Store from "./Store";
 import AuthService from "./AuthService";
@@ -6,9 +7,8 @@ import DestinationList from "./DestinationList";
 import Picker from "./Picker";
 import SignInDialog from "./SignInDialog";
 import firebase from "firebase/app";
-import { from as observableFrom, Subscription } from "rxjs";
-import { switchMap } from "rxjs/operators";
 import { Destination } from "./Store";
+import UserContext from "./UserContext";
 
 firebase.initializeApp({
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -16,40 +16,86 @@ firebase.initializeApp({
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID
 });
 
-export default function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <h1 className="App-title">Lunchtime</h1>
-      </header>
-
-      <div className="App-body-container">
-        <div className="App-body">
-          <Home />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 const store = new Store();
 const authService = new AuthService();
 
-function Home() {
-  const [user, setUser] = useState();
-  const [destinations, setDestinations] = useState(null);
+function ProtectedRoute({ component, ...rest }: RouteProps) {
+  const Component = component as React.ReactType;
 
+  const user = useContext<any>(UserContext);
+  return (
+    <Route
+      {...rest}
+      render={props =>
+        user ? (
+          <Component {...props} />
+        ) : (
+          <Redirect
+            to={{
+              pathname: "/sign-in",
+              state: { from: props.location }
+            }}
+          />
+        )
+      }
+    />
+  );
+}
+
+export default function App() {
+  const [user, setUser] = useState<firebase.User | null>(null);
   useEffect(() => {
     const sub = authService.currentUser$.subscribe(setUser);
     return () => sub.unsubscribe();
   }, []);
 
+  const handleSignOut = () => {
+    authService.signOut();
+  };
+
+  const signOutLink = user ? (
+    <p>
+      Signed in as: {user.displayName}
+      <button onClick={handleSignOut}>Sign out</button>
+    </p>
+  ) : null;
+
+  return (
+    <BrowserRouter>
+      <div className="App">
+        <header className="App-header">
+          <h1 className="App-title">Lunchtime</h1>
+        </header>
+
+        <div className="App-body-container">
+          <div className="App-body">
+            {signOutLink}
+            {user && user.displayName}
+            <UserContext.Provider value={user}>
+              <Switch>
+                <ProtectedRoute exact path="/" component={Home} />
+                <Route
+                  path="/sign-in"
+                  render={_ => <SignInDialog authService={authService} />}
+                />
+              </Switch>
+            </UserContext.Provider>
+          </div>
+        </div>
+      </div>
+    </BrowserRouter>
+  );
+}
+
+function Home() {
+  const user = useContext<any>(UserContext);
+  const [destinations, setDestinations] = useState<Destination[] | null>(null);
+
   useEffect(() => {
-    const sub = authService.currentUser$
-      .pipe(switchMap(u => (u ? store.destinations$ : observableFrom([]))))
-      .subscribe(setDestinations);
+    if (!user) return;
+    const sub = store.destinations$.subscribe(setDestinations);
     return () => sub.unsubscribe();
-  }, []);
+  }, [user]);
 
   const onDestinationCreate = (dest: Destination) => {
     store.createDestination(dest);
@@ -58,14 +104,6 @@ function Home() {
   const onDestinationDelete = (dest: Destination) => {
     store.deleteDestination(dest.id);
   };
-
-  const handleSignOut = () => {
-    authService.signOut();
-  };
-
-  if (!user) {
-    return <SignInDialog authService={authService} />;
-  }
 
   let body;
   if (destinations == null) {
@@ -86,13 +124,5 @@ function Home() {
     );
   }
 
-  return (
-    <div>
-      <p>
-        Signed in as: {user.displayName}
-        <button onClick={handleSignOut}>Sign out</button>
-      </p>
-      {body}
-    </div>
-  );
+  return body;
 }
