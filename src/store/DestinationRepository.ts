@@ -1,24 +1,21 @@
 import firebase from "firebase/app";
 import "firebase/firestore";
-import { Observable, Observer } from "rxjs";
-import { share } from "rxjs/operators";
+import { Observable, Observer, PartialObserver, Subscription } from "rxjs";
+import { Destination, DestinationInfo } from "../interfaces";
 
-export interface Destination {
-  id: string;
-  name: string;
-}
-
-class Store {
+export class DestinationRepository {
   private _db: firebase.firestore.Firestore;
-  readonly destinations$: Observable<Destination[]>;
 
   constructor() {
     this._db = firebase.firestore();
 
-    this.destinations$ = Observable.create(
+  }
+  subscribe(groupId: string, observer: PartialObserver<Destination[]>): Subscription {
+    return Observable.create(
       (observer: Observer<Destination[]>) => {
         const unsubscribe = this._db
           .collection("destinations")
+          .where("groupId", "==", groupId)
           .onSnapshot(querySnapshot => {
             const destinations = [] as Destination[];
             querySnapshot.forEach(doc =>
@@ -31,10 +28,10 @@ class Store {
           });
         return unsubscribe;
       }
-    ).pipe(share());
+    ).subscribe(observer);
   }
 
-  async createDestination(dest: Destination) {
+  async createDestination(dest: DestinationInfo) {
     await this._db.collection("destinations").add(dest);
   }
 
@@ -45,5 +42,3 @@ class Store {
       .delete();
   }
 }
-
-export default Store;

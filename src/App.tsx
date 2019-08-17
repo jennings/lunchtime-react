@@ -1,14 +1,17 @@
 import React, { useEffect, useState, useContext } from "react";
 import { BrowserRouter, Route, Switch, Redirect, RouteProps } from "react-router-dom";
 import "./App.css";
-import Store from "./Store";
+import { DestinationRepository } from "./store";
 import AuthService from "./AuthService";
 import DestinationList from "./DestinationList";
 import Picker from "./Picker";
 import SignInDialog from "./SignInDialog";
 import firebase from "firebase/app";
-import { Destination } from "./Store";
+import { User, Destination, Group } from "./interfaces";
+import GroupContext from "./GroupContext";
 import UserContext from "./UserContext";
+import { GroupSelector } from "./GroupSelector";
+import { GroupCreateForm } from "./GroupCreateForm";
 
 firebase.initializeApp({
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -16,7 +19,8 @@ firebase.initializeApp({
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID
 });
 
-const store = new Store();
+console.log("DestinationRepository", DestinationRepository)
+const store = new DestinationRepository();
 const authService = new AuthService();
 
 function ProtectedRoute({ component, ...rest }: RouteProps) {
@@ -43,7 +47,7 @@ function ProtectedRoute({ component, ...rest }: RouteProps) {
 }
 
 export default function App() {
-  const [user, setUser] = useState<firebase.User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   useEffect(() => {
     const sub = authService.currentUser$.subscribe(setUser);
     return () => sub.unsubscribe();
@@ -70,7 +74,6 @@ export default function App() {
         <div className="App-body-container">
           <div className="App-body">
             {signOutLink}
-            {user && user.displayName}
             <UserContext.Provider value={user}>
               <Switch>
                 <ProtectedRoute exact path="/" component={Home} />
@@ -88,14 +91,28 @@ export default function App() {
 }
 
 function Home() {
-  const user = useContext<any>(UserContext);
+  const user = useContext(UserContext)!;
+  const [group, setGroup] = useState<Group | null>(null);
   const [destinations, setDestinations] = useState<Destination[] | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-    const sub = store.destinations$.subscribe(setDestinations);
+    if (!group) return;
+    const sub = store.subscribe(group.id, { next: setDestinations });
     return () => sub.unsubscribe();
-  }, [user]);
+  }, [user, group]);
+
+  if (group == null) {
+    return (
+      <>
+        <GroupSelector user={user} onSelect={setGroup} />
+        <GroupCreateForm onCreate={setGroup} />
+      </>
+    );
+  }
+
+  if (destinations == null) {
+    return <p>Loading data...</p>;
+  }
 
   const onDestinationCreate = (dest: Destination) => {
     store.createDestination(dest);
@@ -105,24 +122,18 @@ function Home() {
     store.deleteDestination(dest.id);
   };
 
-  let body;
-  if (destinations == null) {
-    body = <p>Loading data...</p>;
-  } else {
-    body = (
-      <>
-        <h1>Pick a place</h1>
-        <Picker destinations={destinations} />
+  return (
+    <GroupContext.Provider value={group}>
+      <h1>Pick a place</h1>
+      <Picker destinations={destinations} />
 
-        <h1>Edit places</h1>
-        <DestinationList
-          destinations={destinations}
-          onCreate={onDestinationCreate}
-          onDelete={onDestinationDelete}
-        />
-      </>
-    );
-  }
-
-  return body;
+      <h1>Edit places</h1>
+      <DestinationList
+        groupId={group.id}
+        destinations={destinations}
+        onCreate={onDestinationCreate}
+        onDelete={onDestinationDelete}
+      />
+    </GroupContext.Provider>
+  );
 }

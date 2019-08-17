@@ -20,14 +20,11 @@ export default function SignInDialog({ authService }: SignInDialogProps) {
     signInFlow: "popup",
     signInOptions: [
       firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-      firebase.auth.PhoneAuthProvider.PROVIDER_ID
+      firebase.auth.PhoneAuthProvider.PROVIDER_ID,
     ],
     callbacks: {
-      signInSuccessWithAuthResult: (result: any) => {
-        authService.signIn(result.user);
-        return false;
-      }
-    }
+      signInSuccessWithAuthResult: () => false,
+    },
   };
 
   return (

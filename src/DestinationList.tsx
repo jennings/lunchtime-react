@@ -1,15 +1,16 @@
 import React, { ChangeEvent, KeyboardEvent } from "react";
 import { useState } from "react";
 import { localeCompareWithSelector } from "./util/compare";
-import { Destination } from "./Store";
+import { Destination, DestinationInfo } from "./interfaces";
 
 interface DestinationListProps {
+  groupId: string;
   destinations: Destination[];
-  onCreate: Function;
-  onDelete: Function;
+  onCreate(d: DestinationInfo): void;
+  onDelete(d: DestinationInfo): void;
 }
 
-export default function DestinationList({ destinations, onCreate, onDelete }: DestinationListProps) {
+export default function DestinationList({ groupId, destinations, onCreate, onDelete }: DestinationListProps) {
   const destinationItems = destinations
     .slice()
     .sort(localeCompareWithSelector(d => d.name))
@@ -25,16 +26,21 @@ export default function DestinationList({ destinations, onCreate, onDelete }: De
       <ul>{destinationItems}</ul>
       Add new:
       <br />
-      <DestinationAdder onAdd={onCreate} />
+      <DestinationAdder groupId={groupId} onAdd={onCreate} />
     </div>
   );
 }
 
-function DestinationAdder({ value, onAdd }: any) {
-  const [text, setText] = useState(value);
+interface DestinationAdderProps {
+  groupId: string;
+  onAdd(d: DestinationInfo): void;
+}
+
+function DestinationAdder({ groupId, onAdd }: DestinationAdderProps) {
+  const [text, setText] = useState("");
 
   const handleSubmit = () => {
-    onAdd({ name: text });
+    onAdd({ groupId, name: text });
     setText("");
   };
 
